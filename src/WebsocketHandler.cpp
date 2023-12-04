@@ -16,7 +16,7 @@ static void dumpFrame(WebsocketFrame frame) {
     case WebsocketHandler::OPCODE_PONG: opcode = std::string("PONG"); break;
     case WebsocketHandler::OPCODE_TEXT: opcode = std::string("TEXT"); break;
   }
-  ESP_LOGI(
+  /*ESP_LOGI(
     TAG,
     "Fin: %d, OpCode: %d (%s), Mask: %d, Len: %d",
     (int)frame.fin,
@@ -24,7 +24,7 @@ static void dumpFrame(WebsocketFrame frame) {
     opcode.c_str(),
     (int)frame.mask,
     (int)frame.len
-  );
+  );*/
 }
 
 WebsocketHandler::WebsocketHandler() {
@@ -43,7 +43,7 @@ WebsocketHandler::~WebsocketHandler() {
 * If no over-riding handler is provided for the "close" event, this method is called.
 */
 void WebsocketHandler::onClose() {
-  HTTPS_LOGD("WebsocketHandler close()");
+  //HTTPS_LOGD("WebsocketHandler close()");
 }
 
 /**
@@ -57,7 +57,7 @@ void WebsocketHandler::onClose() {
 * This will read the whole message into the string stream.
 */
 void WebsocketHandler::onMessage(WebsocketInputStreambuf* pWebsocketInputStreambuf) { //, Websocket *pWebSocket) {
-  HTTPS_LOGD("WebsocketHandler onMessage()");
+  //HTTPS_LOGD("WebsocketHandler onMessage()");
 }
 
 
@@ -66,7 +66,7 @@ void WebsocketHandler::onMessage(WebsocketInputStreambuf* pWebsocketInputStreamb
 * If no over-riding handler is provided for the "error" event, this method is called.
 */
 void WebsocketHandler::onError(std::string error) {
-  HTTPS_LOGD("WebsocketHandler onError()");
+  //HTTPS_LOGD("WebsocketHandler onError()");
 }
 
 void WebsocketHandler::initialize(ConnectionContext * con) {
@@ -82,11 +82,11 @@ void WebsocketHandler::loop() {
 int WebsocketHandler::read() {
   WebsocketFrame frame;
   int length = _con->readBuffer((uint8_t*)&frame, sizeof(frame));
-  HTTPS_LOGD("Websocket: Read %d bytes", length);
+  //HTTPS_LOGD("Websocket: Read %d bytes", length);
   if(length == 0) 
     return 0;
   else if (length != sizeof(frame)) {
-    HTTPS_LOGE("Websocket read error");
+    //HTTPS_LOGE("Websocket read error");
     //_con->closeConnection();
     return -1;
   }
@@ -111,19 +111,19 @@ int WebsocketHandler::read() {
   }
 
   if (payloadLen == 0) {
-    HTTPS_LOGW("WS payload not present");
+    //HTTPS_LOGW("WS payload not present");
   } else {
-    HTTPS_LOGI("WS payload: length=%d", payloadLen);
+    //HTTPS_LOGI("WS payload: length=%d", payloadLen);
   }
 
   switch(frame.opCode) {
     case OPCODE_TEXT:
     case OPCODE_BINARY: {
-      HTTPS_LOGD("Creating Streambuf");
+      //HTTPS_LOGD("Creating Streambuf");
       WebsocketInputStreambuf streambuf(_con, payloadLen, frame.mask==1?mask:nullptr);
-      HTTPS_LOGD("Calling onMessage");
+      //HTTPS_LOGD("Calling onMessage");
       onMessage(&streambuf);
-      HTTPS_LOGD("Discarding Streambuf");
+      //HTTPS_LOGD("Discarding Streambuf");
       streambuf.discard();
       break;
     }
@@ -149,7 +149,7 @@ int WebsocketHandler::read() {
     }
 
     default: {
-        HTTPS_LOGW("WebSocketReader: Unknown opcode: %d", frame.opCode);
+        //HTTPS_LOGW("WebSocketReader: Unknown opcode: %d", frame.opCode);
       break;
     }
   } // Switch opCode
@@ -162,7 +162,7 @@ int WebsocketHandler::read() {
  * @param [in] message A clarification message on the close request.
  */
 void WebsocketHandler::close(uint16_t status, std::string message) {
-  HTTPS_LOGD("Websocket close()");
+  //HTTPS_LOGD("Websocket close()");
 
   _sentClose = true;              // Flag that we have sent a close request.
 
@@ -193,7 +193,7 @@ void WebsocketHandler::close(uint16_t status, std::string message) {
  * @param [in] sendType The type of payload.  Either SEND_TYPE_TEXT or SEND_TYPE_BINARY.
  */
 void WebsocketHandler::send(std::string data, uint8_t sendType) {
-  HTTPS_LOGD(">> Websocket.send(): length=%d", data.length());
+  //HTTPS_LOGD(">> Websocket.send(): length=%d", data.length());
   WebsocketFrame frame;
   frame.fin    = 1;
   frame.rsv1   = 0;
@@ -211,7 +211,7 @@ void WebsocketHandler::send(std::string data, uint8_t sendType) {
     _con->writeBuffer((uint8_t *)&net_len, sizeof(uint16_t));  // Convert to network byte order from host byte order
   }
   _con->writeBuffer((uint8_t*)data.data(), data.length());
-  HTTPS_LOGD("<< Websocket.send()");
+  //HTTPS_LOGD("<< Websocket.send()");
 } // Websocket::send
 
 
@@ -223,7 +223,7 @@ void WebsocketHandler::send(std::string data, uint8_t sendType) {
  * @param [in] sendType The type of payload.  Either SEND_TYPE_TEXT or SEND_TYPE_BINARY.
  */
 void WebsocketHandler::send(uint8_t* data, uint16_t length, uint8_t sendType) {
-  HTTPS_LOGD(">> Websocket.send(): length=%d", length);
+  //HTTPS_LOGD(">> Websocket.send(): length=%d", length);
   WebsocketFrame frame;
   frame.fin    = 1;
   frame.rsv1   = 0;
@@ -241,7 +241,7 @@ void WebsocketHandler::send(uint8_t* data, uint16_t length, uint8_t sendType) {
     _con->writeBuffer((uint8_t *)&net_len, sizeof(uint16_t));  // Convert to network byte order from host byte order
   }
   _con->writeBuffer(data, length);
-  HTTPS_LOGD("<< Websocket.send()");
+  //HTTPS_LOGD("<< Websocket.send()");
 }  // Websocket::send
 
 /**

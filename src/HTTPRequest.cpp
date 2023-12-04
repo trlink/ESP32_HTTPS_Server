@@ -28,7 +28,9 @@ HTTPRequest::HTTPRequest(
 }
 
 HTTPRequest::~HTTPRequest() {
-  _headers->clearAll();
+  if(_headers != NULL) {
+    _headers->clearAll();
+  };
 }
 
 

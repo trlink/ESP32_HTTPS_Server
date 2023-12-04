@@ -6,6 +6,7 @@
 #undef min
 #undef max
 #include <vector>
+#include <mutex>
 
 #include "HTTPSServerConstants.hpp"
 #include "HTTPHeader.hpp"
@@ -30,6 +31,7 @@ public:
 
 private:
   std::vector<HTTPHeader*> * _headers;
+  SemaphoreHandle_t          _mutex;
 };
 
 } /* namespace httpsserver */

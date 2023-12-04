@@ -360,7 +360,7 @@ void HTTPConnection::loop() {
     closeConnection();
   }
 
-  if (!isError()) {
+  if (!isError() && _clientState != CSTATE_CLOSED) {
     // State machine (Reading request, reading headers, ...)
     switch(_connectionState) {
     case STATE_INITIAL: // Read request line
