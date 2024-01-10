@@ -63,6 +63,7 @@ void HTTPMultipartBodyParser::fillBuffer(size_t maxLen) {
   // stop consuming there anyway, to forestall overrunning
   // a boundary)
   char *bufPtr;
+
   if (peekBuffer == NULL) {
     // Nothing in the buffer. Allocate one of the wanted size
     peekBuffer = (char *)malloc(maxLen);

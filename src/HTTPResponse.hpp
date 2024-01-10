@@ -25,7 +25,7 @@ namespace httpsserver {
 class HTTPResponse : public Print {
 public:
   HTTPResponse(ConnectionContext * con);
-  virtual ~HTTPResponse();
+  ~HTTPResponse();
 
   void setStatusCode(uint16_t statusCode);
   void setStatusText(std::string const &statusText);

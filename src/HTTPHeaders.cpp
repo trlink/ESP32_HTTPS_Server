@@ -4,7 +4,10 @@ namespace httpsserver {
 
 HTTPHeaders::HTTPHeaders() {
   _headers = new std::vector<HTTPHeader *>();
-  _mutex   = xSemaphoreCreateMutex();
+  
+  #if HTTPHEADERS_USE_MUTEX == 1
+    _mutex   = xSemaphoreCreateMutex();
+  #endif
 }
 
 HTTPHeaders::~HTTPHeaders() {
@@ -13,62 +16,86 @@ HTTPHeaders::~HTTPHeaders() {
 
   _headers = NULL;
 
-  vSemaphoreDelete(_mutex);
+  #if HTTPHEADERS_USE_MUTEX == 1
+    vSemaphoreDelete(_mutex);
+  #endif
 }
 
 HTTPHeader * HTTPHeaders::get(std::string const &name) {
 
-  xSemaphoreTake(this->_mutex, portMAX_DELAY);
+  #if HTTPHEADERS_USE_MUTEX == 1
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+  #endif
 
   std::string normalizedName = normalizeHeaderName(name);
   for(std::vector<HTTPHeader*>::iterator header = _headers->begin(); header != _headers->end(); ++header) {
     if ((*header)->_name.compare(normalizedName)==0) {
-      xSemaphoreGive(this->_mutex);
+      
+      #if HTTPHEADERS_USE_MUTEX == 1
+        xSemaphoreGive(_mutex);
+      #endif
+
+      
       return (*header);
     }
   }
 
-  xSemaphoreGive(this->_mutex);
+  #if HTTPHEADERS_USE_MUTEX == 1
+    xSemaphoreGive(_mutex);
+  #endif
 
   return NULL;
 }
 
 std::string HTTPHeaders::getValue(std::string const &name) {
 
-  xSemaphoreTake(this->_mutex, portMAX_DELAY);
+  #if HTTPHEADERS_USE_MUTEX == 1
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+  #endif
 
   std::string normalizedName = normalizeHeaderName(name);
   for(std::vector<HTTPHeader*>::iterator header = _headers->begin(); header != _headers->end(); ++header) {
     if ((*header)->_name.compare(normalizedName)==0) {
 
-      xSemaphoreGive(this->_mutex);
+      #if HTTPHEADERS_USE_MUTEX == 1
+        xSemaphoreGive(_mutex);
+      #endif
 
       return ((*header)->_value);
     }
   }
 
-  xSemaphoreGive(this->_mutex);
+  #if HTTPHEADERS_USE_MUTEX == 1
+    xSemaphoreGive(_mutex);
+  #endif
+
   return "";
 }
 
 
 void HTTPHeaders::set(HTTPHeader * header) {
 
-  xSemaphoreTake(this->_mutex, portMAX_DELAY);
+  #if HTTPHEADERS_USE_MUTEX == 1
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+  #endif
 
   for(int i = 0; i < _headers->size(); i++) {
     if ((*_headers)[i]->_name.compare(header->_name)==0) {
       delete (*_headers)[i];
       (*_headers)[i] = header;
 
-      xSemaphoreGive(this->_mutex);
+      #if HTTPHEADERS_USE_MUTEX == 1
+        xSemaphoreGive(_mutex);
+      #endif
 
       return;
     }
   }
   _headers->push_back(header);
 
-  xSemaphoreGive(this->_mutex);
+  #if HTTPHEADERS_USE_MUTEX == 1
+    xSemaphoreGive(_mutex);
+  #endif
 }
 
 std::vector<HTTPHeader *> * HTTPHeaders::getAll() {
@@ -80,7 +107,9 @@ std::vector<HTTPHeader *> * HTTPHeaders::getAll() {
  */
 void HTTPHeaders::clearAll() 
 {
-  xSemaphoreTake(this->_mutex, portMAX_DELAY);
+  #if HTTPHEADERS_USE_MUTEX == 1
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+  #endif
 
   if(_headers != NULL)
   {
@@ -92,15 +121,23 @@ void HTTPHeaders::clearAll()
         {
           delete (*_headers)[0];
 
-  	_headers->erase(_headers->begin());
-        };
+  	  _headers->erase(_headers->begin());
+        }
+	else
+	{
+	  HTTPS_LOGE("Err clear all: idx 0 is null");
+
+	  break;
+	};
       } while (_headers->size() > 0);
     };
 
     _headers->clear();
   };
 
-  xSemaphoreGive(this->_mutex);
+  #if HTTPHEADERS_USE_MUTEX == 1
+    xSemaphoreGive(_mutex);
+  #endif
 }
 
 } /* namespace httpsserver */

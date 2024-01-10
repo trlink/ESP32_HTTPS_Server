@@ -4,6 +4,9 @@ namespace httpsserver {
 
 HTTPConnection::HTTPConnection(ResourceResolver * resResolver):
   _resResolver(resResolver) {
+
+  HTTPS_LOGD("call HTTPConnection()");
+
   _socket = -1;
   _addrLen = 0;
 
@@ -20,7 +23,10 @@ HTTPConnection::HTTPConnection(ResourceResolver * resResolver):
   _wsHandler = nullptr;
 }
 
-HTTPConnection::~HTTPConnection() {
+HTTPConnection::~HTTPConnection() 
+{
+  HTTPS_LOGD("call ~HTTPConnection()");
+
   // Close the socket
   closeConnection();
 }
@@ -464,7 +470,7 @@ void HTTPConnection::loop() {
           }
 
           // Create request context
-          HTTPRequest req  = HTTPRequest(
+          HTTPRequest *pReq = new HTTPRequest(
             this,
             _httpHeaders,
             resolvedResource.getMatchingNode(),
@@ -472,16 +478,18 @@ void HTTPConnection::loop() {
             resolvedResource.getParams(),
             _httpResource
           );
-          HTTPResponse res = HTTPResponse(this);
+          HTTPResponse *pRes = new HTTPResponse(this);
 
           // Add default headers to the response
           auto allDefaultHeaders = _defaultHeaders->getAll();
+
           for(std::vector<HTTPHeader*>::iterator header = allDefaultHeaders->begin(); header != allDefaultHeaders->end(); ++header) {
-            res.setHeader((*header)->_name, (*header)->_value);
+            pRes->setHeader((*header)->_name, (*header)->_value);
           }
 
           // Find the request handler callback
           HTTPSCallbackFunction * resourceCallback;
+
           if (websocketRequested) {
             // For the websocket, we use the handshake callback defined below
             resourceCallback = &handleWebsocketHandshake;
@@ -494,17 +502,17 @@ void HTTPConnection::loop() {
           auto vecMw = _resResolver->getMiddleware();
 
           // Anchor of the chain is the actual resource. The call to the handler is bound here
-          std::function<void()> next = std::function<void()>(std::bind(resourceCallback, &req, &res));
+          std::function<void()> next = std::function<void()>(std::bind(resourceCallback, pReq, pRes));
 
           // Go back in the middleware chain and glue everything together
           auto itMw = vecMw.rbegin();
           while(itMw != vecMw.rend()) {
-            next = std::function<void()>(std::bind((*itMw), &req, &res, next));
+            next = std::function<void()>(std::bind((*itMw), pReq, pRes, next));
             itMw++;
           }
 
           // We insert the internal validation middleware at the start of the chain:
-          next = std::function<void()>(std::bind(&validationMiddleware, &req, &res, next));
+          next = std::function<void()>(std::bind(&validationMiddleware, pReq, pRes, next));
 
           // Call the whole chain
           next();
@@ -512,9 +520,9 @@ void HTTPConnection::loop() {
           // The callback-function should have read all of the request body.
           // However, if it does not, we need to clear the request body now,
           // because otherwise it would be parsed in the next request.
-          if (!req.requestComplete()) {
+          if (!pReq->requestComplete()) {
             HTTPS_LOGW("Callback function did not parse full request body");
-            req.discardRequestBody();
+            pReq->discardRequestBody();
           }
 
           // Finally, after the handshake is done, we create the WebsocketHandler and change the internal state.
@@ -530,21 +538,21 @@ void HTTPConnection::loop() {
             // However, if the client did not set content-size or defined connection: close,
             // we have no chance to do so.
             // Also, the programmer may have explicitly set Connection: close for the response.
-            std::string hConnection = res.getHeader("Connection");
+            std::string hConnection = pRes->getHeader("Connection");
             if (hConnection == "close") {
               _isKeepAlive = false;
             }
             if (!_isKeepAlive) {
               // No KeepAlive -> We are done. Transition to next state.
               if (!isClosed()) {
-                res.finalize();
+                pRes->finalize();
                 _connectionState = STATE_BODY_FINISHED;
               }
             } else {
-              if (res.isResponseBuffered()) {
+              if (pRes->isResponseBuffered()) {
                 // If the response could be buffered:
-                res.setHeader("Connection", "keep-alive");
-                res.finalize();
+                pRes->setHeader("Connection", "keep-alive");
+                pRes->finalize();
                 if (_clientState != CSTATE_CLOSED) {
                   // Refresh the timeout for the new request
                   refreshTimeout();
@@ -559,13 +567,15 @@ void HTTPConnection::loop() {
                 _connectionState = STATE_BODY_FINISHED;
               }
             }
-          }
+          };
+
+	  delete pRes;
+          delete pReq;
         } else {
           // No match (no default route configured, nothing does match)
           HTTPS_LOGW("Could not find a matching resource");
           raiseError(404, "Not Found");
-        }
-
+        };
       }
       break;
     case STATE_BODY_FINISHED: // Request is complete

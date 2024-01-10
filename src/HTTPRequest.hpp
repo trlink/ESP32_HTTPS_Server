@@ -22,7 +22,7 @@ namespace httpsserver {
 class HTTPRequest {
 public:
   HTTPRequest(ConnectionContext * con, HTTPHeaders * headers, HTTPNode * resolvedNode, std::string method, ResourceParameters * params, std::string requestString);
-  virtual ~HTTPRequest();
+  ~HTTPRequest();
 
   std::string getHeader(std::string const &name);
   void setHeader(std::string const &name, std::string const &value);

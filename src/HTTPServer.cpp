@@ -125,38 +125,39 @@ void HTTPServer::loop() {
   }
  
   // Step 2: Check for new connections
-  // This makes only sense if there is space to store the connection
-  if (freeConnectionIdx > -1) {
+  // We create a file descriptor set to be able to use the select function
+  fd_set sockfds;
+  // Out socket is the only socket in this set
+  FD_ZERO(&sockfds);
+  FD_SET(_socket, &sockfds);
 
-    // We create a file descriptor set to be able to use the select function
-    fd_set sockfds;
-    // Out socket is the only socket in this set
-    FD_ZERO(&sockfds);
-    FD_SET(_socket, &sockfds);
+  // We define a "immediate" timeout
+  timeval timeout;
+  timeout.tv_sec  = 0;
+  timeout.tv_usec = 0; // Return immediately, if possible
 
-    // We define a "immediate" timeout
-    timeval timeout;
-    timeout.tv_sec  = 0;
-    timeout.tv_usec = 0; // Return immediately, if possible
+  // Wait for input
+  // As by 2017-12-14, it seems that FD_SETSIZE is defined as 0x40, but socket IDs now
+  // start at 0x1000, so we need to use _socket+1 here
+  select(_socket + 1, &sockfds, NULL, NULL, &timeout);
 
-    // Wait for input
-    // As by 2017-12-14, it seems that FD_SETSIZE is defined as 0x40, but socket IDs now
-    // start at 0x1000, so we need to use _socket+1 here
-    select(_socket + 1, &sockfds, NULL, NULL, &timeout);
-
-    // There is input
-    if (FD_ISSET(_socket, &sockfds)) {
+  // There is input
+  if (FD_ISSET(_socket, &sockfds)) 
+  {
+    // This makes only sense if there is space to store the connection
+    if (freeConnectionIdx > -1) 
+    {
       int socketIdentifier = createConnection(freeConnectionIdx);
 
       // If initializing did not work, discard the new socket immediately
-      if (socketIdentifier < 0) {
+      if (socketIdentifier < 0) 
+      {
         delete _connections[freeConnectionIdx];
         _connections[freeConnectionIdx] = NULL;
-      }
-    }
-
-  }
-}
+      };
+    };
+  };
+};
 
 int HTTPServer::createConnection(int idx) {
   HTTPConnection * newConnection = new HTTPConnection(this);

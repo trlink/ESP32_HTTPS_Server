@@ -32,7 +32,7 @@ namespace httpsserver {
 class HTTPSConnection : public HTTPConnection {
 public:
   HTTPSConnection(ResourceResolver * resResolver);
-  virtual ~HTTPSConnection();
+  ~HTTPSConnection();
 
   virtual int initialize(int serverSocketID, SSL_CTX * sslCtx, HTTPHeaders *defaultHeaders);
   virtual void closeConnection();

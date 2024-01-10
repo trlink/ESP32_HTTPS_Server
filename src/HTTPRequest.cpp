@@ -14,7 +14,9 @@ HTTPRequest::HTTPRequest(
   _resolvedNode(resolvedNode),
   _method(method),
   _params(params),
-  _requestString(requestString) {
+  _requestString(requestString) 
+{
+  HTTPS_LOGD("HTTPRequest created");
 
   HTTPHeader * contentLength = headers->get("Content-Length");
   if (contentLength == NULL) {
@@ -27,7 +29,10 @@ HTTPRequest::HTTPRequest(
 
 }
 
-HTTPRequest::~HTTPRequest() {
+HTTPRequest::~HTTPRequest() 
+{
+  HTTPS_LOGD("HTTPRequest deleted");
+
   if(_headers != NULL) {
     _headers->clearAll();
   };
@@ -153,10 +158,13 @@ std::string HTTPRequest::decodeBasicAuthToken() {
   // If the token is too long, skip
   if (sourceLength > 100) {
     return std::string();
-  } else {
+  } 
+  else 
+  {
     // Try to decode. As we are using mbedtls anyway, we can use that function
     unsigned char * bufOut = new unsigned char[basicAuthString.length()];
     size_t outputLength = 0;
+    
     int res = mbedtls_base64_decode(
         bufOut,
         sourceLength,
@@ -164,13 +172,15 @@ std::string HTTPRequest::decodeBasicAuthToken() {
         ((const unsigned char *)basicAuthString.substr(6).c_str()), // Strip "Basic "
         sourceLength - 6 // Strip "Basic "
     );
+ 
     // Failure of decoding
     if (res != 0) {
       delete[] bufOut;
       return std::string();
-    }
+    };
+
     std::string tokenRes = std::string((char*)bufOut, outputLength);
-    delete[] bufOut;
+    delete bufOut;
     return tokenRes;
   }
 }

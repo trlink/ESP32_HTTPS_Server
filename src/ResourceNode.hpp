@@ -16,7 +16,7 @@ namespace httpsserver {
 class ResourceNode : public HTTPNode {
 public:
   ResourceNode(const std::string &path, const std::string &method, const HTTPSCallbackFunction * callback, const std::string &tag = "");
-  virtual ~ResourceNode();
+  ~ResourceNode();
 
   const std::string _method;
   const HTTPSCallbackFunction * _callback;

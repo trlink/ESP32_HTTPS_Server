@@ -38,7 +38,7 @@ namespace httpsserver {
 class HTTPConnection : private ConnectionContext {
 public:
   HTTPConnection(ResourceResolver * resResolver);
-  virtual ~HTTPConnection();
+  ~HTTPConnection();
 
   virtual int initialize(int serverSocketID, HTTPHeaders *defaultHeaders);
   virtual void closeConnection();

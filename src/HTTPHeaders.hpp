@@ -1,6 +1,8 @@
 #ifndef SRC_HTTPHEADERS_HPP_
 #define SRC_HTTPHEADERS_HPP_
 
+#define HTTPHEADERS_USE_MUTEX 1
+
 #include <string>
 // Arduino declares it's own min max, incompatible with the stl...
 #undef min
@@ -19,7 +21,7 @@ namespace httpsserver {
 class HTTPHeaders {
 public:
   HTTPHeaders();
-  virtual ~HTTPHeaders();
+  ~HTTPHeaders();
 
   HTTPHeader * get(std::string const &name);
   std::string getValue(std::string const &name);
@@ -31,7 +33,9 @@ public:
 
 private:
   std::vector<HTTPHeader*> * _headers;
-  SemaphoreHandle_t          _mutex;
+  #if HTTPHEADERS_USE_MUTEX == 1
+    SemaphoreHandle_t          _mutex;
+  #endif
 };
 
 } /* namespace httpsserver */
