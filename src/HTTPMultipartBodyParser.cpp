@@ -37,16 +37,18 @@ HTTPMultipartBodyParser::HTTPMultipartBodyParser(HTTPRequest * req):
 }
 
 HTTPMultipartBodyParser::~HTTPMultipartBodyParser() {
-  if (peekBuffer) {
+  if (peekBuffer != NULL) 
+  {
     free(peekBuffer);
     peekBuffer = NULL;
   }
 }
 
 void HTTPMultipartBodyParser::discardBody() {
-  if (peekBuffer) {
+  if(peekBuffer != NULL) {
     free(peekBuffer);
-  }
+  };
+  
   peekBuffer = NULL;
   peekBufferSize = 0;
   _request->discardRequestBody();

@@ -146,7 +146,7 @@ void HTTPConnection::closeConnection() {
   if (_wsHandler != nullptr) {
     HTTPS_LOGD("Free WS Handler");
     delete _wsHandler;
-    _wsHandler = NULL;
+    _wsHandler = nullptr;
   }
 }
 
@@ -414,10 +414,14 @@ void HTTPConnection::loop() {
           } else {
             int idxColon = _parserLine.text.find(':');
             if ( (idxColon != std::string::npos) && (_parserLine.text[idxColon+1]==' ') ) {
-              _httpHeaders->set(new HTTPHeader(
-                  _parserLine.text.substr(0, idxColon),
-                  _parserLine.text.substr(idxColon+2)
-              ));
+
+	      #ifdef CONNECTION_READ_HEADERS == 1
+                _httpHeaders->set(new HTTPHeader(
+                    _parserLine.text.substr(0, idxColon),
+                    _parserLine.text.substr(idxColon+2)
+                ));
+              #endif
+
               HTTPS_LOGD("Header: %s = %s (FID=%d)", _parserLine.text.substr(0, idxColon).c_str(), _parserLine.text.substr(idxColon+2).c_str(), _socket);
             } else {
               HTTPS_LOGW("Malformed request header: %s", _parserLine.text.c_str());
@@ -515,7 +519,14 @@ void HTTPConnection::loop() {
           next = std::function<void()>(std::bind(&validationMiddleware, pReq, pRes, next));
 
           // Call the whole chain
-          next();
+		  if(next != NULL)
+		  {
+			next();
+		  }
+		  else
+		  {
+			HTTPS_LOGE("next() callback is NULL");  
+		  };
 
           // The callback-function should have read all of the request body.
           // However, if it does not, we need to clear the request body now,
@@ -569,7 +580,7 @@ void HTTPConnection::loop() {
             }
           };
 
-	  delete pRes;
+	      delete pRes;
           delete pReq;
         } else {
           // No match (no default route configured, nothing does match)

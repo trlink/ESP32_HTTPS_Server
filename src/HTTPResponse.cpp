@@ -49,6 +49,8 @@ std::string HTTPResponse::getStatusText() {
 }
 
 void HTTPResponse::setHeader(std::string const &name, std::string const &value) {
+  HTTPS_LOGD("HTTPResponse::setHeader %s, %s", name.c_str(), value.c_str());
+  
   _headers.set(new HTTPHeader(name, value));
 }
 

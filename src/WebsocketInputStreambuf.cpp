@@ -12,19 +12,21 @@ WebsocketInputStreambuf::WebsocketInputStreambuf(
   size_t dataLength,
   uint8_t *pMask,
   size_t bufferSize
-) {
-  _con     = con;    // The socket we will be reading from
+) 
+{
+  HTTPS_LOGD("create WebsocketContext()");
+  _con        = con;    // The socket we will be reading from
   _dataLength = dataLength; // The size of the record we wish to read.
   _pMask      = pMask;
   _bufferSize = bufferSize; // The size of the buffer used to hold data
   _sizeRead   = 0;          // The size of data read from the socket
-  _buffer = new char[bufferSize]; // Create the buffer used to hold the data read from the socket.
+  _buffer     = new char[bufferSize]; // Create the buffer used to hold the data read from the socket.
 
   setg(_buffer, _buffer, _buffer); // Set the initial get buffer pointers to no data.
 }
 
 WebsocketInputStreambuf::~WebsocketInputStreambuf() {
-  //FIXME: Call order incorrect? discard() uses _buffer
+  HTTPS_LOGD("delete WebsocketContext()");
   delete[] _buffer;
   discard();
 }
@@ -45,10 +47,13 @@ WebsocketInputStreambuf::~WebsocketInputStreambuf() {
 void WebsocketInputStreambuf::discard() {
   uint8_t byte;
   HTTPS_LOGD(">> WebsocketContext.discard(): %d bytes", _dataLength - _sizeRead);
-  while(_sizeRead < _dataLength) {
+  
+  while(_sizeRead < _dataLength) 
+  {
     _con->readBuffer(&byte, 1);
     _sizeRead++;
   }
+  
   HTTPS_LOGD("<< WebsocketContext.discard()");
 } // WebsocketInputStreambuf::discard
 

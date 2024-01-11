@@ -30,6 +30,12 @@
 #include "WebsocketHandler.hpp"
 #include "WebsocketNode.hpp"
 
+
+//set to 1 if you want the request headers
+//which consume a huge amount of memory...
+#define CONNECTION_READ_HEADERS 0
+
+
 namespace httpsserver {
 
 /**
