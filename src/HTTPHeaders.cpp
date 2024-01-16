@@ -49,25 +49,30 @@ HTTPHeader * HTTPHeaders::get(std::string const &name) {
 
 std::string HTTPHeaders::getValue(std::string const &name) {
 
-  #if HTTPHEADERS_USE_MUTEX == 1
-    xSemaphoreTake(_mutex, portMAX_DELAY);
-  #endif
+  if(_headers->size() > 0)
+  {
+	#if HTTPHEADERS_USE_MUTEX == 1
+      xSemaphoreTake(_mutex, portMAX_DELAY);
+    #endif
+	
+    std::string normalizedName = normalizeHeaderName(name);
+    for(std::vector<HTTPHeader*>::iterator header = _headers->begin(); header != _headers->end(); ++header) {
+      if ((*header)->_name.compare(normalizedName)==0) {
 
-  std::string normalizedName = normalizeHeaderName(name);
-  for(std::vector<HTTPHeader*>::iterator header = _headers->begin(); header != _headers->end(); ++header) {
-    if ((*header)->_name.compare(normalizedName)==0) {
+        #if HTTPHEADERS_USE_MUTEX == 1
+          xSemaphoreGive(_mutex);
+        #endif
 
-      #if HTTPHEADERS_USE_MUTEX == 1
-        xSemaphoreGive(_mutex);
-      #endif
-
-      return ((*header)->_value);
-    }
-  }
-
-  #if HTTPHEADERS_USE_MUTEX == 1
-    xSemaphoreGive(_mutex);
-  #endif
+        return ((*header)->_value);
+      };
+    };
+	
+	#if HTTPHEADERS_USE_MUTEX == 1
+      xSemaphoreGive(_mutex);
+    #endif
+  };
+  
+  
 
   return "";
 }
@@ -107,12 +112,12 @@ std::vector<HTTPHeader *> * HTTPHeaders::getAll() {
  */
 void HTTPHeaders::clearAll() 
 {
-  #if HTTPHEADERS_USE_MUTEX == 1
-    xSemaphoreTake(_mutex, portMAX_DELAY);
-  #endif
-
   if(_headers != NULL)
   {
+	#if HTTPHEADERS_USE_MUTEX == 1
+      xSemaphoreTake(_mutex, portMAX_DELAY);
+    #endif
+	
     if(_headers->size() > 0)
     {
       do
@@ -121,23 +126,24 @@ void HTTPHeaders::clearAll()
         {
           delete (*_headers)[0];
 
-  	  _headers->erase(_headers->begin());
+  	      _headers->erase(_headers->begin());
         }
-	else
-	{
-	  HTTPS_LOGE("Err clear all: idx 0 is null");
+	    else
+	    {
+	      HTTPS_LOGE("Err clear all: idx 0 is null");
 
-	  break;
-	};
+	      break;
+	    };
+		
       } while (_headers->size() > 0);
     };
 
     _headers->clear();
+	
+	#if HTTPHEADERS_USE_MUTEX == 1
+      xSemaphoreGive(_mutex);
+    #endif
   };
-
-  #if HTTPHEADERS_USE_MUTEX == 1
-    xSemaphoreGive(_mutex);
-  #endif
 }
 
 } /* namespace httpsserver */

@@ -9,7 +9,7 @@
 // 4: Error + Warn + Info + Debug
 
 #ifndef HTTPS_LOGLEVEL
-  #define HTTPS_LOGLEVEL 4
+  #define HTTPS_LOGLEVEL 1
 #endif
 
 #ifdef HTTPS_LOGTIMESTAMP
