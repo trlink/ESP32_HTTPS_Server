@@ -26,7 +26,6 @@ HTTPRequest::HTTPRequest(
     _remainingContent = parseInt(contentLength->_value);
     _contentLengthSet = true;
   }
-
 }
 
 HTTPRequest::~HTTPRequest() 
@@ -122,9 +121,14 @@ bool HTTPRequest::requestComplete() {
  */
 void HTTPRequest::discardRequestBody() {
   byte buf[16];
-  while(!requestComplete()) {
-    readBytes(buf, 16);
-  }
+  
+  while(!requestComplete()) 
+  {
+    if(readBytes(buf, 16) <= 0) 
+	{
+	  break;
+	};
+  };
 }
 
 std::string HTTPRequest::getBasicAuthUser() {

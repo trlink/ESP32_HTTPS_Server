@@ -531,9 +531,14 @@ void HTTPConnection::loop() {
           // The callback-function should have read all of the request body.
           // However, if it does not, we need to clear the request body now,
           // because otherwise it would be parsed in the next request.
-          if (!pReq->requestComplete()) {
+          if (!pReq->requestComplete()) 
+		  {
             HTTPS_LOGW("Callback function did not parse full request body");
-            pReq->discardRequestBody();
+			
+			if(isClosed() == false) 
+			{
+			  pReq->discardRequestBody();
+			};
           }
 
           // Finally, after the handshake is done, we create the WebsocketHandler and change the internal state.
@@ -582,7 +587,9 @@ void HTTPConnection::loop() {
 
 	      delete pRes;
           delete pReq;
-        } else {
+        } 
+		else 
+		{
           // No match (no default route configured, nothing does match)
           HTTPS_LOGW("Could not find a matching resource");
           raiseError(404, "Not Found");

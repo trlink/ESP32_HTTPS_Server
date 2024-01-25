@@ -16,6 +16,7 @@ HTTPMultipartBodyParser::HTTPMultipartBodyParser(HTTPRequest * req):
   fieldFilename("")
 {
   auto contentType = _request->getHeader("Content-Type");
+  
 #ifdef DEBUG_MULTIPART_PARSER      
   Serial.print("Content type: ");
   Serial.println(contentType.c_str());
@@ -54,11 +55,13 @@ void HTTPMultipartBodyParser::discardBody() {
   _request->discardRequestBody();
 }
 
-bool HTTPMultipartBodyParser::endOfBody() {
+bool HTTPMultipartBodyParser::endOfBody() 
+{
   return peekBufferSize == 0  && _request->requestComplete();
 }
 
-void HTTPMultipartBodyParser::fillBuffer(size_t maxLen) {
+void HTTPMultipartBodyParser::fillBuffer(size_t maxLen) 
+{
   // Fill the buffer with up to maxLen bytes (total length, including
   // what was already in the buffer), but stop reading ahead once
   // we have a CR in the buffer (because the upper layers will
@@ -66,46 +69,67 @@ void HTTPMultipartBodyParser::fillBuffer(size_t maxLen) {
   // a boundary)
   char *bufPtr;
 
-  if (peekBuffer == NULL) {
+  if (peekBuffer == NULL) 
+  {
     // Nothing in the buffer. Allocate one of the wanted size
     peekBuffer = (char *)malloc(maxLen);
-    if (peekBuffer == NULL) {
+    
+	if (peekBuffer == NULL) 
+	{
       HTTPS_LOGE("Multipart: out of memory");
       discardBody();
       return;
-    }
+    };
+	
     bufPtr = peekBuffer;
     peekBufferSize = 0;
-  } else if (peekBufferSize < maxLen) {
+  } 
+  else if (peekBufferSize < maxLen) 
+  {
     // Something in the buffer, but not enough
     char *newPeekBuffer = (char *)realloc(peekBuffer, maxLen);
-    if (newPeekBuffer == NULL) {
+	
+    if (newPeekBuffer == NULL) 
+	{
       HTTPS_LOGE("Multipart: out of memory");
       discardBody();
       return;
-    }
+    };
+	
     peekBuffer = newPeekBuffer;
     bufPtr = peekBuffer + peekBufferSize;
-  } else {
+  } 
+  else 
+  {
     // We already have enough data in the buffer.
     return;
-  }
-  while(bufPtr < peekBuffer+maxLen) {
-    size_t didRead = _request->readChars(bufPtr, peekBuffer+maxLen-bufPtr);
-    if (didRead == 0) {
+  };
+  
+  while(bufPtr < (peekBuffer + maxLen))
+  {
+    size_t didRead = _request->readChars(bufPtr, (peekBuffer + maxLen) - bufPtr);
+    
+	if (didRead == 0) 
+	{
       break;
-    }
+    };
+	
     bufPtr += didRead;
-    // We stop buffering once we have a CR in the buffer
-    if (memchr(peekBuffer, '\r', bufPtr-peekBuffer) != NULL) {
+    
+	// We stop buffering once we have a CR in the buffer
+    if(memchr(peekBuffer, '\r', bufPtr - peekBuffer) != NULL) 
+	{
       break;
-    }
-  }
+    };
+  };
+  
   peekBufferSize = bufPtr - peekBuffer;
-  if (peekBufferSize == 0) {
-    HTTPS_LOGE("Multipart incomplete");
-  }
-}
+  
+  if (peekBufferSize == 0) 
+  {
+    HTTPS_LOGE("Multipart incomplete: received: %i", peekBufferSize);
+  };
+};
 
 void HTTPMultipartBodyParser::consumedBuffer(size_t consumed) {
   if (consumed == 0) {
@@ -140,36 +164,50 @@ bool HTTPMultipartBodyParser::skipCRLF() {
   return true;
 }
 
-std::string HTTPMultipartBodyParser::readLine() {
+std::string HTTPMultipartBodyParser::readLine() 
+{
   fillBuffer(MAXLINESIZE);
-  if (peekBufferSize == 0) {
+  
+  if (peekBufferSize == 0) 
+  {
     return "";
-  }
+  };
+  
   char *crPtr = (char *)memchr(peekBuffer, '\r', peekBufferSize);
-  if (crPtr == NULL) {
+  
+  if (crPtr == NULL) 
+  {
     HTTPS_LOGE("Multipart line too long");
     discardBody();
     return "";
-  }
-  size_t lineLength = crPtr-peekBuffer;
+  };
+  
+  size_t lineLength = crPtr - peekBuffer;
   std::string rv(peekBuffer, lineLength);
   consumedBuffer(lineLength);
   skipCRLF();
+  
   return rv;
 }
 
 // Returns true if the buffer contains a boundary (or possibly lastBoundary)
-bool HTTPMultipartBodyParser::peekBoundary() {
-  if (peekBuffer == NULL || peekBufferSize < boundary.size()) {
+bool HTTPMultipartBodyParser::peekBoundary() 
+{
+  if (peekBuffer == NULL || peekBufferSize < boundary.size()) 
+  {
     return false;
   }
   char *ptr = peekBuffer;
-  if (*ptr == '\r') {
+  if (*ptr == '\r') 
+  {
     ptr++;
   }
-  if (*ptr == '\n') {
+  
+  if (*ptr == '\n') 
+  {
     ptr++;
   }
+  
   return memcmp(ptr, boundary.c_str(), boundary.size()) == 0;
 }
 
@@ -197,8 +235,10 @@ bool HTTPMultipartBodyParser::nextField() {
   fieldName = "";
   fieldMimeType = "text/plain";
   fieldFilename = "";
-  while (true) {
+  while (true) 
+  {
     line = readLine();
+	
     if (line == "") {
       break;
     }
@@ -241,11 +281,14 @@ bool HTTPMultipartBodyParser::nextField() {
         }
       }
     }
-  }
-  if (fieldName == "") {
+  };
+  
+  if (fieldName == "") 
+  {
     HTTPS_LOGE("Multipart missing name");
     return false;
-  }
+  };
+  
   return true;
 }
 
@@ -271,7 +314,8 @@ size_t HTTPMultipartBodyParser::read(byte* buffer, size_t bufferSize) {
   }
   size_t readSize = std::min(bufferSize, MAXLINESIZE);
   fillBuffer(readSize);
-  if (peekBoundary()) {
+  if (peekBoundary()) 
+  {
     return 0;
   }
   // We read at most up to a CR (so we don't miss a boundary that has been partially buffered)
