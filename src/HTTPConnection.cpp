@@ -415,7 +415,7 @@ void HTTPConnection::loop() {
             int idxColon = _parserLine.text.find(':');
             if ( (idxColon != std::string::npos) && (_parserLine.text[idxColon+1]==' ') ) {
 
-	      #ifdef CONNECTION_READ_HEADERS == 1
+	          #ifdef CONNECTION_READ_HEADERS == 1
                 _httpHeaders->set(new HTTPHeader(
                     _parserLine.text.substr(0, idxColon),
                     _parserLine.text.substr(idxColon+2)
@@ -572,8 +572,13 @@ void HTTPConnection::loop() {
                 if (_clientState != CSTATE_CLOSED) {
                   // Refresh the timeout for the new request
                   refreshTimeout();
+				  
                   // Reset headers for the new connection
-                  _httpHeaders->clearAll();
+				  if(_httpHeaders != NULL)
+				  {
+                    _httpHeaders->clearAll();
+				  };
+				  
                   // Go back to initial state
                   _connectionState = STATE_INITIAL;
                 }
