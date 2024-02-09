@@ -179,7 +179,7 @@ std::string HTTPRequest::decodeBasicAuthToken() {
  
     // Failure of decoding
     if (res != 0) {
-      delete[] bufOut;
+      delete bufOut;
       return std::string();
     };
 
