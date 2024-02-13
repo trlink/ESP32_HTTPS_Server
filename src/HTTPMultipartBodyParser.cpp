@@ -211,16 +211,35 @@ bool HTTPMultipartBodyParser::peekBoundary()
   return memcmp(ptr, boundary.c_str(), boundary.size()) == 0;
 }
 
-bool HTTPMultipartBodyParser::nextField() {
-  fillBuffer(MAXLINESIZE);
-  while(!peekBoundary()) {
-    std::string dummy = readLine();
-    if (endOfBody()) {
-      HTTPS_LOGE("Multipart missing last boundary");
-      return false;
-    }
-    fillBuffer(MAXLINESIZE);
-  }
+bool HTTPMultipartBodyParser::nextField() 
+{
+	//variables
+	///////////
+	long lTimeout = millis() + 30000;
+  
+	fillBuffer(MAXLINESIZE);
+  
+	while(peekBoundary() == false) 
+	{
+		std::string dummy = readLine();
+	
+		if(millis() > lTimeout)
+		{
+			HTTPS_LOGE("Multipart timeout");
+			return false;
+		};
+
+		if (endOfBody()) 
+		{
+			HTTPS_LOGE("Multipart missing last boundary");
+			return false;
+		};
+		
+		fillBuffer(MAXLINESIZE);
+	};
+  
+  
+  
   skipCRLF();
   std::string line = readLine();
   if (line == lastBoundary) {
@@ -231,10 +250,13 @@ bool HTTPMultipartBodyParser::nextField() {
     HTTPS_LOGE("Multipart incorrect boundary");
     return false;
   }
+  
   // Read header lines up to and including blank line
   fieldName = "";
   fieldMimeType = "text/plain";
   fieldFilename = "";
+  
+  
   while (true) 
   {
     line = readLine();
