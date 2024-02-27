@@ -1,7 +1,7 @@
 #ifndef SRC_HTTPHEADERS_HPP_
 #define SRC_HTTPHEADERS_HPP_
 
-#define HTTPHEADERS_USE_MUTEX 1
+
 
 #include <string>
 // Arduino declares it's own min max, incompatible with the stl...

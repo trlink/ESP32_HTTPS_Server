@@ -242,20 +242,26 @@ bool HTTPConnection::canReadData() {
   return FD_ISSET(_socket, &sockfds);
 }
 
-size_t HTTPConnection::readBuffer(byte* buffer, size_t length) {
-  updateBuffer();
-  size_t bufferSize = _bufferUnusedIdx - _bufferProcessed;
+size_t HTTPConnection::readBuffer(byte* buffer, size_t length) 
+{
+	memset(buffer, 0, length);
+	
+	updateBuffer();
+  
+	size_t bufferSize = _bufferUnusedIdx - _bufferProcessed;
 
-  if (length > bufferSize) {
-    length = bufferSize;
-  }
+	if (length > bufferSize) 
+	{
+		length = bufferSize;
+	};
 
-  // Write until length is reached (either by param of by empty buffer
-  for(int i = 0; i < length; i++) {
-    buffer[i] = _receiveBuffer[_bufferProcessed++];
-  }
+	// Write until length is reached (either by param of by empty buffer
+	for(int i = 0; i < length; i++) 
+	{
+		buffer[i] = _receiveBuffer[_bufferProcessed++];
+	};
 
-  return length;
+	return length;
 }
 
 size_t HTTPConnection::pendingBufferSize() {
@@ -272,8 +278,11 @@ size_t HTTPConnection::writeBuffer(byte* buffer, size_t length) {
   return send(_socket, buffer, length, 0);
 }
 
-size_t HTTPConnection::readBytesToBuffer(byte* buffer, size_t length) {
-  return recv(_socket, buffer, length, MSG_WAITALL | MSG_DONTWAIT);
+size_t HTTPConnection::readBytesToBuffer(byte* buffer, size_t length) 
+{
+	memset(buffer, 0, length);
+	
+	return recv(_socket, buffer, length, MSG_WAITALL | MSG_DONTWAIT);
 }
 
 void HTTPConnection::raiseError(uint16_t code, std::string reason) {
@@ -292,31 +301,45 @@ void HTTPConnection::raiseError(uint16_t code, std::string reason) {
   closeConnection();
 }
 
-void HTTPConnection::readLine(int lengthLimit) {
-  while(_bufferProcessed < _bufferUnusedIdx) {
+void HTTPConnection::readLine(int lengthLimit) 
+{
+  while(_bufferProcessed < _bufferUnusedIdx) 
+  {
+	//HTTPS_LOGD("readLine: %s FID=%d", _receiveBuffer, _socket);
+	
     char newChar = _receiveBuffer[_bufferProcessed];
 
-    if ( newChar == '\r') {
+    if ( newChar == '\r') 
+	{
       // Look ahead for \n (if not possible, wait for next round
-      if (_bufferProcessed+1 < _bufferUnusedIdx) {
-        if (_receiveBuffer[_bufferProcessed+1] == '\n') {
+      if ((_bufferProcessed + 1) < _bufferUnusedIdx) 
+	  {
+        if (_receiveBuffer[_bufferProcessed + 1] == '\n') 
+		{
           _bufferProcessed += 2;
           _parserLine.parsingFinished = true;
+		  
           return;
-        } else {
+        } 
+		else 
+		{
           // Line has not been terminated by \r\n
           HTTPS_LOGW("Line without \\r\\n (got only \\r). FID=%d", _socket);
           raiseError(400, "Bad Request");
+		  
           return;
         }
       }
-    } else {
+    } 
+	else 
+	{
       _parserLine.text += newChar;
       _bufferProcessed += 1;
     }
 
     // Check that the max request string size is not exceeded
-    if (_parserLine.text.length() > lengthLimit) {
+    if (_parserLine.text.length() > lengthLimit) 
+	{
       HTTPS_LOGW("Header length exceeded. FID=%d", _socket);
       raiseError(431, "Request Header Fields Too Large");
       return;
@@ -399,9 +422,12 @@ void HTTPConnection::loop() {
       break;
     case STATE_REQUEST_FINISHED: // Read headers
 
-      while (_bufferProcessed < _bufferUnusedIdx && !isClosed()) {
+      while (_bufferProcessed < _bufferUnusedIdx && !isClosed()) 
+	  {
         readLine(HTTPS_REQUEST_MAX_HEADER_LENGTH);
-        if (_parserLine.parsingFinished && _connectionState != STATE_ERROR) {
+		
+        if (_parserLine.parsingFinished && _connectionState != STATE_ERROR) 
+		{
 
           if (_parserLine.text.empty()) {
             HTTPS_LOGD("Headers finished, FID=%d", _socket);
@@ -411,9 +437,13 @@ void HTTPConnection::loop() {
             _parserLine.parsingFinished = false;
             _parserLine.text = "";
             break;
-          } else {
+          } 
+		  else 
+		  {
             int idxColon = _parserLine.text.find(':');
-            if ( (idxColon != std::string::npos) && (_parserLine.text[idxColon+1]==' ') ) {
+			
+            if ( (idxColon != std::string::npos) && (_parserLine.text[idxColon+1]==' ') ) 
+			{
 
 	          #ifdef CONNECTION_READ_HEADERS == 1
                 _httpHeaders->set(new HTTPHeader(
@@ -423,7 +453,9 @@ void HTTPConnection::loop() {
               #endif
 
               HTTPS_LOGD("Header: %s = %s (FID=%d)", _parserLine.text.substr(0, idxColon).c_str(), _parserLine.text.substr(idxColon+2).c_str(), _socket);
-            } else {
+            } 
+			else
+		    {
               HTTPS_LOGW("Malformed request header: %s", _parserLine.text.c_str());
               raiseError(400, "Bad Request");
               break;
@@ -433,6 +465,10 @@ void HTTPConnection::loop() {
           _parserLine.parsingFinished = false;
           _parserLine.text = "";
         }
+		else
+		{
+			HTTPS_LOGD("Headers not finished, FID=%d", _socket);
+		};	
       }
 
       break;

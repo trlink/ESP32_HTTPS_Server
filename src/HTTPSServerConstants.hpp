@@ -44,6 +44,12 @@
 
 // The following lines define limits of the protocol. Exceeding these limits will lead to a 500 error
 
+
+//use mutex when accessing / manipulating headers?
+#ifndef HTTPHEADERS_USE_MUTEX
+	#define HTTPHEADERS_USE_MUTEX 1
+#endif
+
 // Maximum of header lines that are parsed
 #ifndef HTTPS_REQUEST_MAX_HEADERS
 #define HTTPS_REQUEST_MAX_HEADERS               20
